@@ -1,5 +1,6 @@
 /******************************************************************************
 * BmpRenderer - A library that can render and display bitmaps.                *
+*               <https://github.com/xFrednet/BmpRenderer>                     *
 *                                                                             *
 * =========================================================================== *
 * Copyright (C) 2017, xFrednet <xFrednet@gmail.com>                           *
@@ -32,8 +33,11 @@
 
 #include "Bitmap.hpp"
 
-#include <string>
 #include "Common.h"
+
+#include <string>
+#include <fstream>
+
 #include "libbmpread/bmpread.h"
 
 namespace bmp_renderer {
@@ -99,7 +103,7 @@ namespace bmp_renderer {
 
 		return bmp;
 	}
-	Bitmap* CreateBmp(const char* bmpFile)
+	Bitmap* LoadBmp(const char* bmpFile)
 	{
 		bmpread_t bmpIn;
 		if (!bmpread(bmpFile, BMPREAD_TOP_DOWN | BMPREAD_ANY_SIZE | BMPREAD_LOAD_ALPHA, &bmpIn))
@@ -152,6 +156,124 @@ namespace bmp_renderer {
 		}
 
 		return destBmp;
+	}
+
+	/* 
+	 * Most information was taken from: "http://www.fileformat.info/format/bmp/egff.htm"
+	 */
+	typedef struct BMP_FILE_HEADER_ {
+		uint8_t  Magic[2];    /* Magic bytes 'B' and 'M'. */
+		uint32_t FileSize;    /* Size of whole file. */
+		uint32_t Reserved;
+		uint32_t DataOffset; /* Offset from beginning of file to bitmap data. */
+	} BMP_FILE_HEADER;
+	typedef struct BMP_FILE_BMP_HEADER_ {
+		uint32_t Size;            /* Size of this header in bytes */
+		int32_t  Width;           /* Image width in pixels */
+		int32_t  Height;          /* Image height in pixels */
+		uint16_t Planes;          /* Number of color planes */
+		uint16_t BitsPerPixel;    /* Number of bits per pixel */
+		uint32_t Compression;     /* Compression methods used */
+		uint32_t SizeOfBitmap;    /* Size of bitmap in bytes */
+		int32_t  HorzResolution;  /* Horizontal resolution in pixels per meter */
+		int32_t  VertResolution;  /* Vertical resolution in pixels per meter */
+		uint32_t ColorsUsed;      /* Number of colors in the image */
+		uint32_t ColorsImportant; /* Minimum number of important colors */
+
+		uint32_t RedMask;       /* Mask identifying bits of red component */
+		uint32_t GreenMask;     /* Mask identifying bits of green component */
+		uint32_t BlueMask;      /* Mask identifying bits of blue component */
+		uint32_t AlphaMask;     /* Mask identifying bits of alpha component */
+	} BMP_FILE_BMP_HEADER;
+	
+	/*
+	 * Why do I need to write extra write methods? well the structs may use padding that
+	 * isn't supported by loaders
+	 */
+	inline int WriteData(std::ofstream* file, void* data, size_t size)
+	{
+		file->write((const char*)data, size);
+		return file->good();
+	}
+	int WriteBmpFileHeader(std::ofstream* file, BMP_FILE_HEADER* header)
+	{
+		if (!WriteData(file, &header->Magic[0]  , 1)) return 0;
+		if (!WriteData(file, &header->Magic[1]  , 1)) return 0;
+		if (!WriteData(file, &header->FileSize  , 4)) return 0;
+		if (!WriteData(file, &header->Reserved  , 4)) return 0;
+		if (!WriteData(file, &header->DataOffset, 4)) return 0;
+		return 1;
+	}
+	int WriteBmpFileBmpHeader(std::ofstream* file, BMP_FILE_BMP_HEADER* header)
+	{
+		if (!WriteData(file, &header->Size           , 4)) return 0;
+		if (!WriteData(file, &header->Width          , 4)) return 0;
+		if (!WriteData(file, &header->Height         , 4)) return 0;
+		if (!WriteData(file, &header->Planes         , 2)) return 0;
+		if (!WriteData(file, &header->BitsPerPixel   , 2)) return 0;
+		if (!WriteData(file, &header->Compression    , 4)) return 0;
+		if (!WriteData(file, &header->SizeOfBitmap   , 4)) return 0;
+		if (!WriteData(file, &header->HorzResolution , 4)) return 0;
+		if (!WriteData(file, &header->VertResolution , 4)) return 0;
+		if (!WriteData(file, &header->ColorsUsed     , 4)) return 0;
+		if (!WriteData(file, &header->ColorsImportant, 4)) return 0;
+
+		if (!WriteData(file, &header->RedMask        , 4)) return 0;
+		if (!WriteData(file, &header->GreenMask      , 4)) return 0;
+		if (!WriteData(file, &header->BlueMask       , 4)) return 0;
+		if (!WriteData(file, &header->AlphaMask      , 4)) return 0;
+		return 1;
+	}
+	int SaveBitmap(Bitmap const* src, const char* fileName)
+	{
+		std::ofstream file;
+		file.open(fileName, std::ios_base::out | std::ios_base::binary);
+		if (!file.is_open())
+			return 0;
+		
+		BMP_FILE_HEADER fileHeader;
+		fileHeader.Magic[0] = 'B';
+		fileHeader.Magic[1] = 'M';
+		fileHeader.FileSize = 
+			/*sizeof(BMP_FILE_HEADER) without padding     */ 14 + 
+			/*sizeof(BMP_FILE_BMP_HEADER) without padding */ 56 +
+			src->WIDTH * src->HEIGHT * sizeof(Color);
+		fileHeader.Reserved = 0;
+		fileHeader.DataOffset = 14 + 56;
+		WriteBmpFileHeader(&file, &fileHeader);
+
+		BMP_FILE_BMP_HEADER bmpHeader;
+		bmpHeader.Size            = 56; /*sizeof(BMP_FILE_BMP_HEADER) without padding */
+		bmpHeader.Width           = src->WIDTH;
+		bmpHeader.Height          = src->HEIGHT;
+		bmpHeader.Planes          = 1; /*BMP files contain only one color plane, so this value is always 1. */
+		bmpHeader.BitsPerPixel    = 32; /* sizeof(Color) * 8*/
+		bmpHeader.Compression     = 3; /* 32 bit bitmaps use bit fields */
+		bmpHeader.SizeOfBitmap    = 0; /* This value is typically zero when the bitmap data is uncompressed. */
+		bmpHeader.HorzResolution  = 1 * 1000; /* 1px per millimeter */
+		bmpHeader.VertResolution  = 1 * 1000; /* 1px per millimeter */
+		bmpHeader.ColorsUsed      = 0; /* No color palette */
+		bmpHeader.ColorsImportant = 0; /* No color palette */
+
+		bmpHeader.RedMask   = 0x00ff0000;
+		bmpHeader.GreenMask = 0x0000ff00;
+		bmpHeader.BlueMask  = 0x000000ff;
+		bmpHeader.AlphaMask = 0xff000000;
+		WriteBmpFileBmpHeader(&file, &bmpHeader);
+		
+		/* "Scan lines are stored from the bottom up if the value of the Height field in the bitmap header is a positive value[...]
+		 * The bottom-up configuration is the most common." <http://www.fileformat.info/format/bmp/egff.htm>
+		 * 
+		 * So I'll store the bitmap upside down .
+		 */
+		for (int height = src->HEIGHT - 1; height >= 0; height--)
+		{
+			if (!WriteData(&file, &src->Data[height * src->WIDTH], src->WIDTH * sizeof(Color))) return 0;
+		}
+
+		file.close();
+
+		return 1;
 	}
 
 	void DeleteBmp(Bitmap* bmp)
@@ -211,10 +333,6 @@ namespace bmp_renderer {
 			totalG / sampleCount,
 			totalB / sampleCount,
 			totalA / sampleCount);
-	}
-	Color SampleBitmap(Bitmap const* bmp, float srcX0, float srcY0, float srcX1, float srcY1)
-	{
-		return SampleBitmap(bmp, (int)floorf(srcX0), (int)floorf(srcY0), (int)floorf(srcX1), (int)floorf(srcY1));
 	}
 
 	Bitmap* ReplaceColor(Bitmap const* bmp, Color oldColor, Color newColor)

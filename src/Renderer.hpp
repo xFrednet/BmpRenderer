@@ -1,5 +1,6 @@
 /******************************************************************************
 * BmpRenderer - A library that can render and display bitmaps.                *
+*               <https://github.com/xFrednet/BmpRenderer>                     *
 *                                                                             *
 * =========================================================================== *
 * Copyright (C) 2017, xFrednet <xFrednet@gmail.com>                           *

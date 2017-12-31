@@ -1,5 +1,6 @@
 /******************************************************************************
 * BmpRenderer - A library that can render and display bitmaps.                *
+*               <https://github.com/xFrednet/BmpRenderer>                     *
 *                                                                             *
 * =========================================================================== *
 * Copyright (C) 2017, xFrednet <xFrednet@gmail.com>                           *
@@ -32,6 +33,14 @@
 
 #pragma once
 
+#ifndef __BMPRENDERER_COMMON_H__
+#define __BMPRENDERER_COMMON_H__
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #define CLAMP_VALUE(x, min, max) \
 if (min <= max) {\
 	if (x < min)\
@@ -51,3 +60,9 @@ if (min <= max) {\
 	x = y;\
 	y = oldValue; \
 }
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* __BMPRENDERER_COMMON_H__ */

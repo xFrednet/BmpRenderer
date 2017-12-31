@@ -1,5 +1,6 @@
 /******************************************************************************
 * BmpRenderer - A library that can render and display bitmaps.                *
+*               <https://github.com/xFrednet/BmpRenderer>                     *
 *                                                                             *
 * =========================================================================== *
 * Copyright (C) 2017, xFrednet <xFrednet@gmail.com>                           *
@@ -30,7 +31,8 @@
 *                                                                             *
 ******************************************************************************/
 
-#pragma once
+#ifndef __BMPRENDERER_BITMAP_H__
+#define __BMPRENDERER_BITMAP_H__
 
 #define BMP_RENDERER_BITMAP_BASE_COLOR 0xffff00ff
 
@@ -71,12 +73,14 @@ namespace bmp_renderer {
 	};
 	
 	Bitmap* CreateBmp(unsigned width, unsigned height);
-	Bitmap* CreateBmp(const char* bmpFile);
+	Bitmap* LoadBmp(const char* bmpFile);
 	Bitmap* CreateSubBitmap(Bitmap const* src, int srcX0, int srcY0, int srcX1, int srcY1);
+	int  SaveBitmap(Bitmap const* src, const char* fileName);
 	void DeleteBmp(Bitmap* bmp);
 
 	Color SampleBitmap(Bitmap const* bmp, int srcX0, int srcY0, int srcX1, int srcY1);
-	Color SampleBitmap(Bitmap const* bmp, float srcX0, float srcY0, float srcX1, float srcY1);
 
 	Bitmap* ReplaceColor(Bitmap const* bmp, Color oldColor, Color newColor);
 }
+
+#endif /*__BMPRENDERER_BITMAP_H__*/
