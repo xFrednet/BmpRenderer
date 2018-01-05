@@ -191,7 +191,7 @@ static int ReadUint8(uint8_t * dest, FILE * fp)
     return 1;
 }
 
-/* Bitmap file header, including magic bytes.
+/* bitmap_t file header, including magic bytes.
  */
 typedef struct bmp_header
 {
@@ -222,7 +222,7 @@ static int ReadHeader(bmp_header * header, FILE * fp)
  */
 #define BMP_HEADER_SIZE 14
 
-/* Bitmap info struct: comes immediately after header and describes the image.
+/* bitmap_t info struct: comes immediately after header and describes the image.
  */
 typedef struct bmp_info
 {

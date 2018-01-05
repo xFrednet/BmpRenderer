@@ -474,7 +474,7 @@ namespace bmp_renderer {
 	}
 	inline float GetRotY(const float& angle, const int& x, const int& y)
 	{
-		return GetRotX(angle, (float)x, (float)y);
+		return GetRotY(angle, (float)x, (float)y);
 	}
 	void DrawRotatedBitmap(Bitmap* dest, Bitmap const* src, int drawX, int drawY, float angle, float scale, bool clipBorders)
 	{
@@ -536,8 +536,8 @@ namespace bmp_renderer {
 		CLAMP_VALUE(yEnd  , -drawY, dest->HEIGHT - drawY - 1);
 
 		/*
-		* drawing
-		*/
+		 * drawing
+		 */
 		int srcX;
 		int srcY;
 		int x;
