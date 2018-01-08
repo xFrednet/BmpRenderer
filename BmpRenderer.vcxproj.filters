@@ -21,9 +21,6 @@
     <ClInclude Include="BmpRenderer.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\API\win\WinWindow.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\API\Window.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -39,9 +36,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Dependencies\libbmpread\bmpread.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\API\win\WinWindow.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\API\Window.cpp">

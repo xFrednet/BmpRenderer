@@ -36,7 +36,7 @@
 #include <map>
 
 
-#if defined(_WIN32) || defined(_WIN64)
+#if 0
 
 #define WM_SETWINDOWCLASS              WM_USER + 1
 

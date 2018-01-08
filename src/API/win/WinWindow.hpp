@@ -35,7 +35,7 @@
 
 #include "../Window.hpp"
 
-#if defined(_WIN32) || defined(_WIN64)
+#if 0
 
 #include <windows.h>
 

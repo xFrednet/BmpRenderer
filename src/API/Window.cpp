@@ -34,32 +34,84 @@
 #include "Window.hpp"
 
 #if defined(_WIN32) || defined(_WIN64)
-#	include "win/WinWindow.hpp"
-#endif
 
-namespace bmp_renderer {
+#include <windows.h>
 
-	Window* Window::CreateInstance(char const* name, unsigned width, unsigned height, WINDOW_ON_EXIT_ACTION onExit)
+namespace bmp_renderer
+{
+	bool DrawOnWindow(void* window, int drawX, int drawY, Bitmap* src)
 	{
-#if defined(_WIN32) || defined(_WIN64)
-		return new api::WinWindow(name, width, height, onExit);
-#endif
-		return nullptr;
-	}
+		HBITMAP winBmp;
+		HWND hwnd = (HWND)window;
 
-	Window::Window(WINDOW_ON_EXIT_ACTION onExit)
-		: m_OnExitAction(onExit)
-	{
+		if (hwnd && src && src->WIDTH == 0 && src->HEIGHT == 0)
+			return false;
+
+		/*
+		 * Bitmap
+		 */
+		{
+			BITMAPINFO bmpInfo;
+			HDC dc;
+			RGBQUAD* pPixels = nullptr;
+
+			memset(&bmpInfo, 0, sizeof(BITMAPINFO));
+			bmpInfo.bmiHeader.biSize        = sizeof(BITMAPINFO);
+			bmpInfo.bmiHeader.biWidth       = src->WIDTH;
+			bmpInfo.bmiHeader.biHeight      = src->HEIGHT;
+			bmpInfo.bmiHeader.biPlanes      = 1;
+			bmpInfo.bmiHeader.biBitCount    = 32;
+			bmpInfo.bmiHeader.biCompression = BI_RGB;
+
+			dc = GetDC(hwnd);
+			if (!dc)
+				return false;
+			winBmp = CreateDIBSection(dc, &bmpInfo, DIB_RGB_COLORS, (void**)&pPixels, NULL, 0);
+			if (!winBmp)
+				return false;
+
+			SetDIBits(dc, winBmp, 0, src->HEIGHT, src->Data, &bmpInfo, DIB_RGB_COLORS);
+
+			ReleaseDC(hwnd, dc);
+		}
+
+		/*
+		 * Draw on screen
+		 */
+		{
+			PAINTSTRUCT ps;
+			HDC dc, memDC;
+			HGDIOBJ memDcOldObject;
+
+			dc = BeginPaint(hwnd, &ps);
+
+			memDC = CreateCompatibleDC(dc);
+			memDcOldObject = SelectObject(memDC, winBmp);
+
+			BitBlt(dc, drawX, drawY, src->WIDTH, src->HEIGHT, memDC, 0, 0, SRCCOPY);
 		
-	}
+			SelectObject(memDC, memDcOldObject);
+			DeleteDC(memDC);
+			EndPaint(hwnd, &ps);
+			
+			RECT size = {(LONG)drawX, (LONG)drawY, (LONG)src->WIDTH, (LONG)src->HEIGHT};
+			RedrawWindow(hwnd, &size, nullptr, RDW_INVALIDATE);
+		}
 
-	WINDOW_ON_EXIT_ACTION Window::getOnExitAction() const
-	{
-		return m_OnExitAction;
+		DeleteObject(winBmp);
+		
+		return true;
 	}
-	void Window::setOnExitAction(WINDOW_ON_EXIT_ACTION action)
-	{
-		m_OnExitAction = action;
-	}
-
 }
+
+#else
+
+namespace bmp_renderer
+{
+	bool DrawOnWindow(void* window, int drawX, int drawY, Bitmap* src)
+	{
+		return false;
+	}
+}
+
+#endif
