@@ -35,10 +35,12 @@
 
 #include "Common.h"
 
-#include <string>
+#include <stdlib.h>
+#include <stdint.h>
+#include <string.h>
 #include <fstream>
 
-#include "libbmpread/bmpread.h"
+#include "../Dependencies/libbmpread/bmpread.h"
 
 namespace bmp_renderer {
 
@@ -106,9 +108,9 @@ namespace bmp_renderer {
 	Bitmap* LoadBmp(const char* bmpFile)
 	{
 		bmpread_t bmpIn;
-		if (!bmpread(bmpFile, BMPREAD_TOP_DOWN | BMPREAD_ANY_SIZE | BMPREAD_LOAD_ALPHA, &bmpIn))
+		if (!bmpread(bmpFile, BMPREAD_TOP_DOWN | BMPREAD_ANY_SIZE | BMPREAD_ALPHA, &bmpIn))
 		{
-			return nullptr;
+			return 0;
 		}
 
 		Bitmap* bmp = CreateBmp(bmpIn.width, bmpIn.height);
@@ -117,10 +119,10 @@ namespace bmp_renderer {
 		int srcIndex = 0;
 		for (int destIndex = 0; destIndex < bmp->WIDTH * bmp->HEIGHT; destIndex++, srcIndex += 4)
 		{
-			bmp->Data[destIndex].R = bmpIn.rgb_data[srcIndex];
-			bmp->Data[destIndex].G = bmpIn.rgb_data[srcIndex + 1];
-			bmp->Data[destIndex].B = bmpIn.rgb_data[srcIndex + 2];
-			bmp->Data[destIndex].A = bmpIn.rgb_data[srcIndex + 3]; //WTF
+			bmp->Data[destIndex].R = bmpIn.data[srcIndex];
+			bmp->Data[destIndex].G = bmpIn.data[srcIndex + 1];
+			bmp->Data[destIndex].B = bmpIn.data[srcIndex + 2];
+			bmp->Data[destIndex].A = bmpIn.data[srcIndex + 3]; //WTF
 		}
 		
 		return bmp;

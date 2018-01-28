@@ -34,10 +34,13 @@
 #include "Renderer.hpp"
 
 #include <string>
+#include <math.h>
+
 #include "Common.h"
 
 #define MAX(x, y)                      (((x) > (y)) ? (x) : (y)) 
 #define MIN(x, y)                      (((x) < (y)) ? (x) : (y)) 
+#define ABS(x)                         (((x) <  0 ) ? (x) : -(x))
 #define TO_RAD(x)                      ((3.14f / 180) * x)
 
 namespace bmp_renderer {
@@ -123,7 +126,7 @@ namespace bmp_renderer {
 		//Line : a*x + m
 		float horizontalDiff = (float)(endX - startX);
 		float verticalDiff   = (float)(endY - startY);
-		bool  moveAlongXAxis = abs(horizontalDiff) > abs(verticalDiff);
+		bool  moveAlongXAxis = ABS(horizontalDiff) > ABS(verticalDiff);
 
 		// the start has to be lower than the end along the selected axis 
 		if ((moveAlongXAxis && endX < startX) || //if alongXAxis and startX is higher 

@@ -64,8 +64,6 @@ namespace bmp_renderer {
 
 	struct Bitmap
 	{
-		Bitmap() = delete;
-
 		const int WIDTH;
 		const int HEIGHT;
 		
